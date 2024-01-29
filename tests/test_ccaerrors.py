@@ -2,7 +2,7 @@ import sys
 
 import pytest
 
-from ccaerrors import __version__, errorNotify, errorRaise, errorExit
+from ccaerrors import __version__, errorNotify, errorRaise, errorExit, onErrorNotify
 
 
 def test_version():
@@ -68,3 +68,27 @@ def test_errorExit(capsys):
         emsg = f"{ename} Exception at line {lineno} in function {fname}: {msg}\n"
         out, err = capsys.readouterr()
         assert out == emsg
+
+
+def test_decorate_notify(capsys):
+    try:
+
+        @onErrorNotify
+        def decorate_notify():
+            msg = "This is the test exception"
+            raise TheException(msg)
+
+        with pytest.raises(TheException):
+            decorate_notify()
+
+    except Exception as e:
+        print("this is the exception handler in the test")
+        exci = sys.exc_info()[2]
+        lineno = exci.tb_lineno
+        fname = exci.tb_frame.f_code.co_name
+        ename = type(e).__name__
+    finally:
+        emsg = "calling func.__name__='decorate_notify'\n\n"
+        out, err = capsys.readouterr()
+        estr = f"{out}\n{err}"
+        assert estr == emsg
